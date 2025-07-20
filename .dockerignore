@@ -1,0 +1,5 @@
+*
+!src/**/*.py
+!requirements.txt
+!src/home.html
+!src/favicon.ico
