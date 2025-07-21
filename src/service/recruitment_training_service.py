@@ -80,15 +80,18 @@ class RecruitmentTrainingService:
 
         return X, y, encoders
 
-    def train_and_log_model(self, x_train, y_train, x_test, y_test, encoders):
+    def train_and_log_model(self, x_train, y_train, x_test, y_test, encoders, n_estimators, random_state):
         mlflow.set_experiment(self.experiment_name)
         with mlflow.start_run():
-            model = RandomForestClassifier(n_estimators=100, random_state=42)
+            model = RandomForestClassifier(n_estimators=n_estimators, random_state=random_state)
             model.fit(x_train, y_train)
 
             preds = model.predict(x_test)
             acc = accuracy_score(y_test, preds)
             report = classification_report(y_test, preds, output_dict=True)
+
+            #salvar metrica para monitoramento
+            self.salvar_classification_report(report)
 
             mlflow.log_metric("accuracy", acc)
             mlflow.sklearn.log_model(model, "model")
@@ -103,9 +106,26 @@ class RecruitmentTrainingService:
                 "accuracy": acc,
                 "classification_report": report
             }
+        
+    def salvar_classification_report(report_dict, path='.', filename='current.csv'):
+        current_path = os.path.join(path, filename)
+        reference_path = os.path.join(path, 'reference.csv')
 
-    def run_pipeline(self, applicants_path, prospects_path):
+        new_report_df = pd.DataFrame(report_dict).transpose()
+
+        if not os.path.exists(current_path):
+            new_report_df.to_csv(current_path, index=True)
+            new_report_df.to_csv(reference_path, index=True)
+            print("Primeira execução. Salvando current.csv e reference.csv.")
+        else:
+            current_df = pd.read_csv(current_path, index_col=0)
+            current_df.to_csv(reference_path, index=True)
+            new_report_df.to_csv(current_path, index=True)
+            print("Atualização. current.csv atualizado e versão anterior salva em reference.csv.")
+
+    def run_pipeline(self, applicants_path, prospects_path, n_estimators, random_state):
         df = self.load_and_prepare_data(applicants_path, prospects_path)
         X, y, encoders = self.preprocess_features(df)
         x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
-        return self.train_and_log_model(x_train, y_train, x_test, y_test, encoders)
+        return self.train_and_log_model(x_train, y_train, x_test, y_test, encoders, n_estimators, random_state)
+

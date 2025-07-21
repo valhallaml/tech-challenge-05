@@ -3,12 +3,17 @@ from fastapi.responses import HTMLResponse
 from service.recruitment_training_service import RecruitmentTrainingService
 from service.monitoring import generate_drift_report
 from models.candidate import Candidate
+from pydantic import BaseModel
 
 import joblib
 from scipy.sparse import hstack
 from sklearn.preprocessing import LabelEncoder
 
 router = APIRouter()
+
+class TrainRequest(BaseModel):
+    max_features: int
+    random_state: int
 
 @router.post('/predict')
 def predict(candidate: Candidate):
@@ -36,9 +41,10 @@ def predict(candidate: Candidate):
     }
 
 @router.post('/train')
-def treinar_modelo():
+def treinar_modelo(params: TrainRequest):
     service = RecruitmentTrainingService()
-    resultado = service.run_pipeline('src/data/applicants.json', 'src/data/prospects.json')
+    resultado = service.run_pipeline('src/data/applicants.json', 'src/data/prospects.json',params.max_features,
+        params.random_state)
     return {
         'status': 'Treinamento concluído com sucesso.',
         'metrics': resultado
