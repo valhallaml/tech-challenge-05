@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
-from src.service.recruitment_training_service import RecruitmentTrainingService
+from service.recruitment_training_service import RecruitmentTrainingService
 from service.monitoring import generate_drift_report
 from pydantic import BaseModel
 import joblib
@@ -9,15 +9,15 @@ from sklearn.preprocessing import LabelEncoder
 
 router = APIRouter()
 
-
 clientRecruitmentTrainingService = RecruitmentTrainingService()
 
 # Carregar artefatos
-model = joblib.load("model_applicants.pkl")
-tfidf = joblib.load("tfidf_applicants.pkl")
-le_ingles = joblib.load("le_ingles.pkl")
-le_espanhol = joblib.load("le_espanhol.pkl")
-le_nivel = joblib.load("le_nivel.pkl")
+model = joblib.load('model.pkl')
+tfidf = joblib.load('tfidf.pkl')
+le_ingles = joblib.load('le_ingles.pkl')
+le_espanhol = joblib.load('le_espanhol.pkl')
+le_nivel = joblib.load('le_nivel.pkl')
+
 class Candidate(BaseModel):
     cv_pt: str
     nivel_ingles: str
@@ -29,7 +29,7 @@ class TrainInput(BaseModel):
     applicants_path: str
     prospects_path: str
 
-@app.post("/predict")
+@router.post('/predict')
 def predict(candidate: Candidate):
     # Pré-processar entrada
     cv_vector = tfidf.transform([candidate.cv_pt])
@@ -41,20 +41,18 @@ def predict(candidate: Candidate):
     X = hstack([cv_vector, meta_features])
 
     pred = model.predict(X)
-    proba = model.predict_proba(X)
 
     return {
-        "prediction": int(pred[0]),
-        "probability": proba[0].tolist()
+        'prediction': int(pred[0])
     }
 
-@app.post("/train")
+@router.post('/train')
 def treinar_modelo(data: TrainInput):
     service = RecruitmentTrainingService()
     resultado = service.run_pipeline(data.applicants_path, data.prospects_path)
     return {
-        "status": "Treinamento concluído com sucesso.",
-        "metrics": resultado
+        'status': 'Treinamento concluído com sucesso.',
+        'metrics': resultado
     }
 
 @router.get('/monitoring', response_class=HTMLResponse)
