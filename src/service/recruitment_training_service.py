@@ -65,10 +65,10 @@ class RecruitmentTrainingService:
         df["nivel_profissional_enc"] = le_nivel.fit_transform(df["nivel_profissional"])
 
         tfidf = TfidfVectorizer(max_features=300)
-        X_texto = tfidf.fit_transform(df["cv_pt"])
+        x_texto = tfidf.fit_transform(df["cv_pt"])
 
-        X_meta = df[["nivel_ingles_enc", "nivel_espanhol_enc", "nivel_profissional_enc"]].values
-        X = hstack([X_texto, X_meta])
+        x_meta = df[["nivel_ingles_enc", "nivel_espanhol_enc", "nivel_profissional_enc"]].values
+        X = hstack([x_texto, x_meta])
         y = df["match_realizado"]
 
         encoders = {
@@ -80,13 +80,13 @@ class RecruitmentTrainingService:
 
         return X, y, encoders
 
-    def train_and_log_model(self, X_train, y_train, X_test, y_test, encoders):
+    def train_and_log_model(self, x_train, y_train, x_test, y_test, encoders):
         mlflow.set_experiment(self.experiment_name)
         with mlflow.start_run():
             model = RandomForestClassifier(n_estimators=100, random_state=42)
-            model.fit(X_train, y_train)
+            model.fit(x_train, y_train)
 
-            preds = model.predict(X_test)
+            preds = model.predict(x_test)
             acc = accuracy_score(y_test, preds)
             report = classification_report(y_test, preds, output_dict=True)
 
@@ -107,5 +107,5 @@ class RecruitmentTrainingService:
     def run_pipeline(self, applicants_path, prospects_path):
         df = self.load_and_prepare_data(applicants_path, prospects_path)
         X, y, encoders = self.preprocess_features(df)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
-        return self.train_and_log_model(X_train, y_train, X_test, y_test, encoders)
+        x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+        return self.train_and_log_model(x_train, y_train, x_test, y_test, encoders)

@@ -2,35 +2,24 @@ from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 from service.recruitment_training_service import RecruitmentTrainingService
 from service.monitoring import generate_drift_report
-from pydantic import BaseModel
+from models.candidate import Candidate
+
 import joblib
 from scipy.sparse import hstack
 from sklearn.preprocessing import LabelEncoder
 
 router = APIRouter()
 
-clientRecruitmentTrainingService = RecruitmentTrainingService()
-
-# Carregar artefatos
-model = joblib.load('model.pkl')
-tfidf = joblib.load('tfidf.pkl')
-le_ingles = joblib.load('le_ingles.pkl')
-le_espanhol = joblib.load('le_espanhol.pkl')
-le_nivel = joblib.load('le_nivel.pkl')
-
-class Candidate(BaseModel):
-    cv_pt: str
-    nivel_ingles: str
-    nivel_espanhol: str
-    nivel_profissional: str
-
-# --- Input do endpoint de treino ---
-class TrainInput(BaseModel):
-    applicants_path: str
-    prospects_path: str
-
 @router.post('/predict')
 def predict(candidate: Candidate):
+
+    # Carregar artefatos
+    model = joblib.load('model.pkl')
+    tfidf = joblib.load('tfidf.pkl')
+    le_ingles = joblib.load('le_ingles.pkl')
+    le_espanhol = joblib.load('le_espanhol.pkl')
+    le_nivel = joblib.load('le_nivel.pkl')
+
     # Pré-processar entrada
     cv_vector = tfidf.transform([candidate.cv_pt])
     ni_enc = le_ingles.transform([candidate.nivel_ingles])
@@ -47,15 +36,15 @@ def predict(candidate: Candidate):
     }
 
 @router.post('/train')
-def treinar_modelo(data: TrainInput):
+def treinar_modelo():
     service = RecruitmentTrainingService()
-    resultado = service.run_pipeline(data.applicants_path, data.prospects_path)
+    resultado = service.run_pipeline('src/data/applicants.json', 'src/data/prospects.json')
     return {
         'status': 'Treinamento concluído com sucesso.',
         'metrics': resultado
     }
 
-@router.get('/monitoring', response_class=HTMLResponse)
+@router.get('/monitoring', response_class = HTMLResponse)
 def get_monitoring():
     html = generate_drift_report()
     return HTMLResponse(content=html, status_code=200)

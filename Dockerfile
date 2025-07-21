@@ -19,6 +19,7 @@ USER app
 ENV PATH="/home/app/.local/bin:${PATH}"
 ENV PYTHONPATH=/app/src
 
+COPY --chown=app:app src/data/ src/data/
 COPY --chown=app:app requirements.txt requirements.txt
 
 RUN pip install \

@@ -3,3 +3,4 @@
 !requirements.txt
 !src/home.html
 !src/favicon.ico
+!src/data/*.json
