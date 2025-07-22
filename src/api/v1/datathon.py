@@ -47,4 +47,16 @@ def treinar_modelo(train_request: TrainRequest = TrainRequest(n_estimators=100, 
 @router.get('/monitoring', response_class = HTMLResponse)
 def get_monitoring():
     html = generate_drift_report()
+    if html is None:
+        no_data_html = """
+        <html>
+            <head><title>Relatório de Drift</title></head>
+            <body style="font-family: sans-serif; text-align: center; padding-top: 100px;">
+                <h1 style="color: #FFA500;">⚠️ Relatório indisponível</h1>
+                <p>Nenhum dado foi encontrado para gerar o painel de drift.</p>
+                <p>Verifique se os arquivos <code>reference.csv</code> e <code>current.csv</code> existem no diretório <code>src/data</code>.</p>
+            </body>
+        </html>
+        """
+        return HTMLResponse(content=no_data_html, status_code=404)
     return HTMLResponse(content=html, status_code=200)
