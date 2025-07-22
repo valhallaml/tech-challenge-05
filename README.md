@@ -7,6 +7,7 @@
 - [Executar localmente](#executar-localmente)
 - [Executando com docker compose](#executando-com-docker-compose)
 - [Documentação](#documentação)
+- [Arquitetura](#arquitetura)
 
 ## Como Executar
 
@@ -49,3 +50,7 @@ docker compose up --build --force-recreate
 ## Documentação
 
 - <http://localhost:8000/docs>
+
+## Arquitetura
+
+![Arquitetura](images/arquitetura.png)
