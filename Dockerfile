@@ -30,6 +30,7 @@ RUN pip install \
     && rm -f requirements.txt
 
 COPY --chown=app:app --chmod=0500 src src
+RUN chmod 0700 src/data/
 
 CMD [ "uvicorn", "main:app", "--host=0.0.0.0", "--port", "8000" ]
 
